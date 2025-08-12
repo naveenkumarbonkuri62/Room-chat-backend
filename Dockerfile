@@ -1,14 +1,13 @@
-# Use Java 21 (as per your POM)
-FROM eclipse-temurin:21-jdk-alpine
-
-# Set working directory
+# Stage 1: Build with Maven
+FROM maven:3.9.3-eclipse-temurin-21 AS build
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy your jar file
-COPY target/chat-app-backend-0.0.1-SNAPSHOT.jar app.jar
-
-# Expose port 5459 for your app
+# Stage 2: Run the jar with lightweight JRE
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/chat-app-backend-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 5459
-
-# Run the Spring Boot application
 ENTRYPOINT ["java", "-jar", "app.jar"]
